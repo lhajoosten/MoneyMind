@@ -1,0 +1,79 @@
+version: '3'
+
+tasks:
+  help:
+    desc: Show this help message
+    cmds:
+      - task --list
+
+  setup:
+    desc: Initial project setup (PowerShell compatible)
+    cmds:
+      - echo "Setting up MoneyMind development environment..."
+      - powershell -Command "Copy-Item -Path backend/.env.example -Destination backend/.env -Force"
+      - docker-compose build
+      - docker-compose run --rm backend alembic upgrade head
+      - echo "Setup complete! Run 'task dev' to start development."
+
+  dev:
+    desc: Start development environment
+    cmds:
+      - docker-compose up --build
+
+  test:
+    desc: Run all tests
+    cmds:
+      - docker-compose run --rm backend pytest
+      - docker-compose run --rm frontend npm test
+
+  test-backend:
+    desc: Run backend tests only
+    cmds:
+      - docker-compose run --rm backend pytest -v
+
+  test-frontend:
+    desc: Run frontend tests only
+    cmds:
+      - docker-compose run --rm frontend npm test
+
+  lint:
+    desc: Run code linting
+    cmds:
+      - docker-compose run --rm backend ruff check .
+      - docker-compose run --rm backend mypy src/
+      - docker-compose run --rm frontend npm run lint
+
+  lint-fix:
+    desc: Fix linting issues automatically
+    cmds:
+      - docker-compose run --rm backend ruff check . --fix
+      - docker-compose run --rm frontend npm run lint:fix
+
+  clean:
+    desc: Clean up containers and volumes
+    cmds:
+      - docker-compose down -v
+      - docker system prune -f
+
+  db-reset:
+    desc: Reset database
+    cmds:
+      - docker-compose down -v
+      - docker-compose up db -d
+      - powershell -Command "Start-Sleep -Seconds 5"
+      - docker-compose run --rm backend alembic upgrade head
+
+  logs:
+    desc: Show logs
+    cmds:
+      - docker-compose logs -f
+
+  shell-backend:
+    desc: Open backend shell
+    cmds:
+      - docker-compose run --rm backend bash
+
+  shell-db:
+    desc: Open database shell
+    cmds:
+      - docker-compose exec db psql -U
