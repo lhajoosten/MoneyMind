@@ -1,4 +1,4 @@
-FROM python:3.11-slim as base
+FROM python:3.11-alpine AS base
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -19,7 +19,7 @@ COPY pyproject.toml ./
 RUN uv pip install --system --requirement pyproject.toml
 
 # Development stage
-FROM base as development
+FROM base AS development
 RUN uv pip install --system --requirement pyproject.toml --extra dev
 
 # Copy source code
@@ -29,6 +29,6 @@ COPY . .
 CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # Production stage
-FROM base as production
+FROM base AS production
 COPY . .
 CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

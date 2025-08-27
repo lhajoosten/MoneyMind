@@ -1,13 +1,13 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # PostgreSQL Database
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     environment:
       POSTGRES_DB: moneymind
       POSTGRES_USER: moneymind
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: Y0urStrOngP@assword!
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
@@ -25,8 +25,8 @@ services:
       context: ./backend
       target: development
     environment:
-      - DATABASE_URL=postgresql+asyncpg://moneymind:password@db:5432/moneymind
-      - DATABASE_URL_SYNC=postgresql://moneymind:password@db:5432/moneymind
+      - DATABASE_URL=postgresql+asyncpg://moneymind:Y0urStrOngP@assword!@db:5432/moneymind
+      - DATABASE_URL_SYNC=postgresql://moneymind:Y0urStrOngP@assword!@db:5432/moneymind
       - ENVIRONMENT=development
       - DEBUG=true
     volumes:
