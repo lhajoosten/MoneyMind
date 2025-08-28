@@ -1,16 +1,15 @@
 version: "3.8"
 
 services:
-  # PostgreSQL Database
-  db:
+  postgresql:
+    container_name: moneymind-postgresql
     image: postgres:17-alpine
     environment:
       POSTGRES_DB: moneymind
       POSTGRES_USER: moneymind
-      POSTGRES_PASSWORD: Y0urStrOngP@assword!
+      POSTGRES_PASSWORD: "Y0urStrOngP@assword!"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -19,33 +18,29 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backend API
   backend:
+    container_name: moneymind-backend
     build:
       context: ./backend
       target: development
     environment:
-      - DATABASE_URL=postgresql+asyncpg://moneymind:Y0urStrOngP@assword!@db:5432/moneymind
-      - DATABASE_URL_SYNC=postgresql://moneymind:Y0urStrOngP@assword!@db:5432/moneymind
-      - ENVIRONMENT=development
-      - DEBUG=true
+      DATABASE_URL: "postgresql+asyncpg://moneymind:Y0urStrOngP%40assword%21@postgresql:5432/moneymind"
+      DATABASE_URL_SYNC: "postgresql://moneymind:Y0urStrOngP%40assword%21@postgresql:5432/moneymind"
+      ENVIRONMENT: development
+      DEBUG: "true"
     volumes:
       - ./backend:/app
       - /app/__pycache__
     ports:
       - "8000:8000"
     depends_on:
-      db:
+      postgresql:
         condition: service_healthy
     command: >
-      sh -c "
-        uv pip install --system -e . &&
-        alembic upgrade head &&
-        uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
-      "
+      sh -c "pip install --no-cache-dir -e . && if [ -f alembic.ini ]; then alembic upgrade head; else echo 'No alembic.ini found, skipping migrations'; fi && uvicorn app.presentation.main:app --host 0.0.0.0 --port 8000 --reload"
 
-  # Frontend React App
   frontend:
+    container_name: moneymind-frontend
     build:
       context: ./frontend
       target: development
@@ -53,9 +48,9 @@ services:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "3000:1412"
+      - "1412:1412"
     environment:
-      - VITE_API_URL=http://localhost:8000
+      VITE_API_URL: "http://localhost:8000"
     depends_on:
       - backend
 

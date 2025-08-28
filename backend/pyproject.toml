@@ -9,7 +9,6 @@ description = "Intelligent personal finance application with AI insights"
 authors = [
     {name = "Luc Joosten", email = "your.email@example.com"},
 ]
-readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     # FastAPI ecosystem
@@ -115,3 +114,6 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
