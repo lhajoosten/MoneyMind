@@ -7,14 +7,14 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ....domain.entities.transaction import Transaction
-from ....domain.repositories.interfaces import TransactionRepository
-from ....domain.value_objects.account_id import AccountId
-from ....domain.value_objects.transaction_id import TransactionId
+from app.domain.entities.transaction import Transaction
+from app.domain.repositories.transaction_repository import ITransactionRepository
+from app.domain.value_objects.account_id import AccountId
+from app.domain.value_objects.transaction_id import TransactionId
 from ..models.transaction import TransactionModel
 
 
-class SqlAlchemyTransactionRepository(TransactionRepository):
+class SqlAlchemyTransactionRepository(ITransactionRepository):
     """SQLAlchemy implementation of TransactionRepository."""
 
     def __init__(self, session: AsyncSession):
@@ -61,10 +61,10 @@ class SqlAlchemyTransactionRepository(TransactionRepository):
 
     def _model_to_entity(self, model: TransactionModel) -> Transaction:
         """Convert database model to domain entity."""
-        from ....domain.entities.category import Category
-        from ....domain.value_objects.category_id import CategoryId
-        from ....domain.value_objects.currency import Currency
-        from ....domain.value_objects.money import Money
+        from app.domain.entities.category import Category
+        from app.domain.value_objects.category_id import CategoryId
+        from app.domain.value_objects.currency import Currency
+        from app.domain.value_objects.money import Money
 
         # Parse tags from JSON string
         tags = json.loads(model.tags) if model.tags else []

@@ -11,6 +11,7 @@ from .base import BaseModel
 
 class AccountModel(BaseModel):
     """Database model for Account."""
+
     __tablename__ = "accounts"
 
     user_id = Column(UUID(as_uuid=True), nullable=False)
@@ -21,4 +22,6 @@ class AccountModel(BaseModel):
     is_active = Column(Boolean, default=True, nullable=False)
 
     # Relationships
-    transactions: Mapped[List["TransactionModel"]] = relationship("TransactionModel", back_populates="account")
+    transactions: Mapped[List["TransactionModel"]] = relationship(
+        "TransactionModel", back_populates="account"
+    )

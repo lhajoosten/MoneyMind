@@ -5,10 +5,10 @@ from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
 from .entity import Entity
-from ..value_objects.account_id import AccountId
-from ..value_objects.category_id import CategoryId
-from ..value_objects.money import Money
-from ..value_objects.transaction_id import TransactionId
+from app.domain.value_objects.account_id import AccountId
+from app.domain.value_objects.category_id import CategoryId
+from app.domain.value_objects.money import Money
+from app.domain.value_objects.transaction_id import TransactionId
 from ..events.transaction_events import TransactionCategorizedEvent
 
 if TYPE_CHECKING:

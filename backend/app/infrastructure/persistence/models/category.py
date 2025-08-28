@@ -11,6 +11,7 @@ from .base import BaseModel
 
 class CategoryModel(BaseModel):
     """Database model for Category."""
+
     __tablename__ = "categories"
 
     name = Column(String(100), nullable=False)
@@ -22,6 +23,10 @@ class CategoryModel(BaseModel):
     budget_currency = Column(String(3))
 
     # Relationships
-    parent: Mapped[Optional["CategoryModel"]] = relationship("CategoryModel", remote_side=[id])
+    parent: Mapped[Optional["CategoryModel"]] = relationship(
+        "CategoryModel", remote_side="CategoryModel.id"
+    )
     subcategories: Mapped[List["CategoryModel"]] = relationship("CategoryModel")
-    transactions: Mapped[List["TransactionModel"]] = relationship("TransactionModel", back_populates="category")
+    transactions: Mapped[List["TransactionModel"]] = relationship(
+        "TransactionModel", back_populates="category"
+    )

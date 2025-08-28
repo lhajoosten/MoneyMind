@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from .value_objects.category_id import CategoryId
-from .value_objects.money import Money
+from app.domain.value_objects.category_id import CategoryId
+from app.domain.value_objects.money import Money
 
 
 @dataclass

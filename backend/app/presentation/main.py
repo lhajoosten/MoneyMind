@@ -6,7 +6,8 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from ..infrastructure.persistence.database import create_database
+from app.infrastructure.persistence.database import create_database
+from .controllers.auth_controller import router as auth_router
 
 
 @asynccontextmanager
@@ -34,6 +35,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(auth_router)
 
 
 @app.get("/")
