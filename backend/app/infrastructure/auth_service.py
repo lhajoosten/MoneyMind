@@ -51,7 +51,7 @@ class AuthService:
             raise ValueError("User with this email already exists")
 
         # Create new user
-        user_id = UserId(str(uuid.uuid4()))
+        user_id = UserId.new()
         user = User(
             id=user_id,
             email=email,
@@ -88,4 +88,4 @@ class AuthService:
         user_id = self.verify_token(token)
         if user_id is None:
             return None
-        return await self.user_repository.get_by_id(UserId(user_id))
+        return await self.user_repository.get_by_id(UserId.from_string(user_id))
