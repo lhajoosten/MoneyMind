@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.infrastructure.persistence.database import create_database
 from .controllers.auth_controller import router as auth_router
+from .controllers.transaction_controller import router as transaction_router
 
 
 @asynccontextmanager
@@ -38,6 +39,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router)
+app.include_router(transaction_router)
 
 
 @app.get("/")

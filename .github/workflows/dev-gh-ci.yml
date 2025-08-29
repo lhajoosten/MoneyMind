@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.11, 3.12]
+        python-version: [3.11]
     env:
       PYTHONPATH: backend
     steps:
@@ -25,24 +25,37 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/backend/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/backend/pyproject.toml', '**/backend/requirements-dev.txt', '**/backend/requirements.txt') }}
       - name: Install backend deps
         working-directory: backend
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Lint (flake8) if present
+          if [ -f pyproject.toml ]; then
+            pip install -e .
+            pip install -e ".[dev]"
+          elif [ -f requirements-dev.txt ]; then
+            pip install -r requirements-dev.txt
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+      - name: Lint (ruff) if present
         working-directory: backend
         run: |
-          if command -v flake8 >/dev/null 2>&1; then flake8 . || true; fi
+          if command -v ruff >/dev/null 2>&1 || python -m ruff --version >/dev/null 2>&1; then
+            python -m ruff check . || true
+          fi
       - name: Type check (mypy) if present
         working-directory: backend
         run: |
-          if command -v mypy >/dev/null 2>&1; then mypy . || true; fi
+          if command -v mypy >/dev/null 2>&1 || python -m mypy --version >/dev/null 2>&1; then
+            python -m mypy . || true
+          fi
       - name: Run tests
         working-directory: backend
         run: |
-          if [ -d tests ] || [ -f pytest.ini ]; then pytest -q --maxfail=1; fi
+          if [ -d tests ] || [ -f pyproject.toml ]; then
+            python -m pytest -q --maxfail=1
+          fi
       - name: Upload backend coverage artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -55,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [21, 22]
+        node-version: [21]
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node

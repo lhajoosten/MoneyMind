@@ -22,6 +22,11 @@ class ITransactionRepository(Protocol):
         ...
 
     @abstractmethod
+    async def get_all(self) -> List[Transaction]:
+        """Get all transactions."""
+        ...
+
+    @abstractmethod
     async def save(self, transaction: Transaction) -> None:
         """Save a transaction."""
         ...
