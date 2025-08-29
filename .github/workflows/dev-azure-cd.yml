@@ -1,0 +1,129 @@
+name: CD - Azure Deploy (main)
+
+# Deploy automatically when code is merged to main
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  IMAGE_NAME: moneymind-backend
+  FRONTEND_APP_LOCATION: frontend
+  FRONTEND_OUTPUT_LOCATION: frontend/build
+
+jobs:
+  build_push:
+    name: Build and push backend image
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.push_image.outputs.image_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Ensure ACR login
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: |
+          az acr login --name "$ACR_NAME"
+
+      - name: Build and push backend image
+        id: push_image
+        env:
+          ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+        run: |
+          TAG=${{ github.sha }}
+          IMAGE="${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${TAG}"
+          echo "Building ${IMAGE}"
+          docker build -f backend/Dockerfile -t "${IMAGE}" backend
+          docker push "${IMAGE}"
+          echo "image_tag=${IMAGE}" >> $GITHUB_OUTPUT
+
+  migrate:
+    name: Run Alembic migrations (dedicated job)
+    needs: build_push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Ensure ACR login
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: |
+          az acr login --name "$ACR_NAME"
+
+      - name: Pull image and run migrations
+        env:
+          POSTGRES_CONNECTION: ${{ secrets.POSTGRES_CONNECTION }}
+        run: |
+          IMAGE="${{ needs.build_push.outputs.image_tag }}"
+          echo "Using image: $IMAGE"
+          docker pull "$IMAGE"
+          # run migrations; container must include alembic and expose CLI
+          docker run --rm -e DATABASE_URL="$POSTGRES_CONNECTION" "$IMAGE" alembic upgrade head
+
+  deploy:
+    name: Configure Web App and restart
+    needs: migrate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configure Web App to use container image
+        env:
+          RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
+          WEBAPP_NAME: ${{ secrets.WEBAPP_NAME }}
+        run: |
+          IMAGE_TAG="${{ needs.build_push.outputs.image_tag }}"
+          az webapp config container set --name "$WEBAPP_NAME" --resource-group "$RESOURCE_GROUP" --docker-custom-image-name "$IMAGE_TAG"
+
+      - name: Restart Web App
+        env:
+          RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
+          WEBAPP_NAME: ${{ secrets.WEBAPP_NAME }}
+        run: |
+          az webapp restart --name "$WEBAPP_NAME" --resource-group "$RESOURCE_GROUP"
+
+  frontend:
+    name: Build & deploy frontend (Static Web Apps)
+    needs: build_push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm run build --if-present
+
+      - name: Deploy frontend to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.STATIC_WEBAPP_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/"              # pas aan indien nodig
+          api_location: ""               # geen Functions in deze flow
+          output_location: "frontend/build"
