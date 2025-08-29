@@ -40,7 +40,7 @@ async def get_transaction_service() -> ITransactionService:
 @router.post("/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
 async def create_transaction(
     request: CreateTransactionRequest,
-    transaction_service: ITransactionService = Depends(),
+    transaction_service: ITransactionService = Depends(get_transaction_service),
 ) -> TransactionResponse:
     """Create a new transaction."""
     try:
@@ -79,7 +79,7 @@ async def create_transaction(
 @router.get("/{transaction_id}", response_model=TransactionResponse)
 async def get_transaction(
     transaction_id: str,
-    transaction_service: ITransactionService = Depends(),
+    transaction_service: ITransactionService = Depends(get_transaction_service),
 ) -> TransactionResponse:
     """Get a transaction by ID."""
     try:
@@ -103,17 +103,19 @@ async def get_transaction(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get transaction"
+            detail=f"Failed to get transaction: {str(e)}"
         )
 
 
 @router.get("/", response_model=List[TransactionResponse])
 async def search_transactions(
     request: SearchTransactionsRequest = Depends(),
-    transaction_service: ITransactionService = Depends(),
+    transaction_service: ITransactionService = Depends(get_transaction_service),
 ) -> List[TransactionResponse]:
     """Search transactions with filters."""
     try:
@@ -141,10 +143,12 @@ async def search_transactions(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to search transactions"
+            detail=f"Failed to search transactions: {str(e)}"
         )
 
 
@@ -152,7 +156,7 @@ async def search_transactions(
 async def update_transaction(
     transaction_id: str,
     request: UpdateTransactionRequest,
-    transaction_service: ITransactionService = Depends(),
+    transaction_service: ITransactionService = Depends(get_transaction_service),
 ) -> TransactionResponse:
     """Update an existing transaction."""
     try:
@@ -184,17 +188,19 @@ async def update_transaction(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update transaction"
+            detail=f"Failed to update transaction: {str(e)}"
         )
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_transaction(
     transaction_id: str,
-    transaction_service: ITransactionService = Depends(),
+    transaction_service: ITransactionService = Depends(get_transaction_service),
 ) -> None:
     """Delete a transaction."""
     try:
@@ -214,10 +220,12 @@ async def delete_transaction(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete transaction"
+            detail=f"Failed to delete transaction: {str(e)}"
         )
 
 
@@ -225,7 +233,7 @@ async def delete_transaction(
 async def categorize_transaction(
     transaction_id: str,
     request: CategorizeTransactionRequest,
-    transaction_service: ITransactionService = Depends(),
+    transaction_service: ITransactionService = Depends(get_transaction_service),
 ) -> TransactionResponse:
     """Categorize a transaction."""
     try:
@@ -254,8 +262,10 @@ async def categorize_transaction(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to categorize transaction"
+            detail=f"Failed to categorize transaction: {str(e)}"
         )

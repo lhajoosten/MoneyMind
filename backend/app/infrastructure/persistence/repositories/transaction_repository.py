@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 from app.domain.entities.transaction import Transaction
 from app.domain.repositories.transaction_repository import ITransactionRepository
@@ -21,8 +22,13 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
 
     async def get_by_id(self, transaction_id: TransactionId) -> Optional[Transaction]:
         """Get transaction by ID."""
+        from sqlalchemy.orm import selectinload
+        
         async with self.session_factory() as session:
-            stmt = select(TransactionModel).where(TransactionModel.id == transaction_id.value)
+            stmt = select(TransactionModel).where(TransactionModel.id == transaction_id.value).options(
+                selectinload(TransactionModel.account),
+                selectinload(TransactionModel.category)
+            )
             result = await session.execute(stmt)
             model = result.scalar_one_or_none()
 
@@ -43,7 +49,10 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
     async def get_all(self) -> List[Transaction]:
         """Get all transactions."""
         async with self.session_factory() as session:
-            stmt = select(TransactionModel)
+            # Eager load category relationship to avoid lazy loading issues
+            stmt = select(TransactionModel).options(
+                selectinload(TransactionModel.category)
+            )
             result = await session.execute(stmt)
             models = result.scalars().all()
 
@@ -53,12 +62,13 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
         """Save a transaction."""
         async with self.session_factory() as session:
             model = TransactionModel.from_domain(transaction)
-            session.add(model)
-            await session.flush()
+            # Use merge to handle both INSERT and UPDATE cases
+            merged_model = await session.merge(model)
+            await session.commit()
 
             # Update entity ID if it was generated
-            if transaction.id.value != model.id:
-                transaction.id = TransactionId(model.id)  # type: ignore
+            if transaction.id.value != merged_model.id:
+                transaction.id = TransactionId(merged_model.id)  # type: ignore
 
     async def delete(self, transaction_id: TransactionId) -> None:
         """Delete a transaction."""
@@ -69,3 +79,4 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
 
             if model:
                 await session.delete(model)
+                await session.commit()

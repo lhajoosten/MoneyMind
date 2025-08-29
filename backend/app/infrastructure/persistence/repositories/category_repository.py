@@ -22,8 +22,13 @@ class SqlAlchemyCategoryRepository(ICategoryRepository):
 
     async def get_by_id(self, category_id: CategoryId) -> Optional[Category]:
         """Get category by ID."""
+        from sqlalchemy.orm import selectinload
+        
         async with self.session_factory() as session:
-            stmt = select(CategoryModel).where(CategoryModel.id == category_id.value)
+            stmt = select(CategoryModel).where(CategoryModel.id == category_id.value).options(
+                selectinload(CategoryModel.parent),
+                selectinload(CategoryModel.subcategories)
+            )
             result = await session.execute(stmt)
             model = result.scalar_one_or_none()
 
