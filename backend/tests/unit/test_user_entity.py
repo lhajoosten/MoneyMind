@@ -75,6 +75,7 @@ class TestUser:
             first_name="Test",
             last_name="User",
             hashed_password="hash",
+            is_active=True,
         )
 
         user2 = User(
@@ -83,6 +84,7 @@ class TestUser:
             first_name="Test",
             last_name="User",
             hashed_password="hash",
+            is_active=True,
         )
 
         user3 = User(
@@ -91,6 +93,7 @@ class TestUser:
             first_name="Test",
             last_name="User",
             hashed_password="hash",
+            is_active=True,
         )
 
         assert user1 == user2
@@ -108,6 +111,7 @@ class TestUser:
             first_name="Test",
             last_name="User",
             hashed_password="hash",
+            is_active=True,
         )
 
         user2 = User(
@@ -116,6 +120,7 @@ class TestUser:
             first_name="Test",
             last_name="User",
             hashed_password="hash",
+            is_active=True,
         )
 
         user3 = User(
@@ -124,6 +129,7 @@ class TestUser:
             first_name="Test",
             last_name="User",
             hashed_password="hash",
+            is_active=True,
         )
 
         assert hash(user1) == hash(user2)
@@ -140,6 +146,7 @@ class TestUser:
             first_name="Repr",
             last_name="Test",
             hashed_password="hash",
+            is_active=True,
         )
 
         repr_str = repr(user)
@@ -158,6 +165,7 @@ class TestUser:
                 first_name="Test",
                 last_name="User",
                 hashed_password="hash",
+                is_active=True,
             )
 
     def test_user_validation_empty_first_name(self):
@@ -171,6 +179,7 @@ class TestUser:
                 first_name="",
                 last_name="User",
                 hashed_password="hash",
+                is_active=True,
             )
 
     def test_user_validation_empty_last_name(self):
@@ -184,6 +193,7 @@ class TestUser:
                 first_name="Test",
                 last_name="",
                 hashed_password="hash",
+                is_active=True,
             )
 
     def test_set_password_success(self):
@@ -195,6 +205,7 @@ class TestUser:
             first_name="Test",
             last_name="User",
             hashed_password=None,
+            is_active=True,
         )
 
         user.set_password("ValidPassword123!")
@@ -211,6 +222,7 @@ class TestUser:
             first_name="Test",
             last_name="User",
             hashed_password=None,
+            is_active=True,
         )
 
         with pytest.raises(
@@ -227,6 +239,7 @@ class TestUser:
             first_name="Test",
             last_name="User",
             hashed_password=None,
+            is_active=True,
         )
 
         password = "ValidPassword123!"
@@ -243,6 +256,7 @@ class TestUser:
             first_name="Test",
             last_name="User",
             hashed_password=None,
+            is_active=True,
         )
 
         user.set_password("ValidPassword123!")
@@ -258,6 +272,7 @@ class TestUser:
             first_name="Test",
             last_name="User",
             hashed_password=None,
+            is_active=True,
         )
 
         assert user.verify_password("AnyPassword") is False

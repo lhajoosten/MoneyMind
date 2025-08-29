@@ -1,12 +1,16 @@
 """Test configuration and shared fixtures."""
 
 import asyncio
+import os
 import pytest
 import pytest_asyncio
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+# Set testing environment
+os.environ["TESTING"] = "true"
 
 from app.infrastructure.persistence.models import Base
 from app.infrastructure.persistence.repositories.user_repository import UserRepository

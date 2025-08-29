@@ -1,23 +1,37 @@
 """Integration tests for authentication API endpoints."""
 
+import os
 import pytest
 from httpx import AsyncClient
 from fastapi import FastAPI
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.presentation.controllers.auth_controller import router
+from app.presentation.controllers.auth_controller import router, get_auth_service
 from app.infrastructure.persistence.models import Base
 from app.infrastructure.persistence.repositories.user_repository import UserRepository
 from app.infrastructure.auth_service import AuthService
 
 
 @pytest.fixture
-async def test_app():
+async def test_app(test_engine):
     """Create test FastAPI application."""
+    # Set testing environment
+    os.environ["TESTING"] = "true"
+    
     app = FastAPI()
     app.include_router(router)
+    
+    # Override the database engine for testing
+    from app.infrastructure.persistence import database
+    database.engine = test_engine
+    database.async_session_factory = async_sessionmaker(
+        bind=test_engine,
+        expire_on_commit=False,
+        autoflush=False,
+    )
+    
     return app
 
 
@@ -53,9 +67,9 @@ async def test_engine():
 @pytest.fixture(scope="function")
 async def test_session(test_engine):
     """Create test database session."""
-    async_session = async_sessionmaker(test_engine, expire_on_commit=False)
+    async_session_factory = async_sessionmaker(test_engine, expire_on_commit=False)
 
-    async with async_session.begin() as session:
+    async with async_session_factory() as session:
         yield session
         await session.rollback()
 
@@ -71,7 +85,7 @@ class TestAuthEndpoints:
     """Integration tests for authentication endpoints."""
 
     @pytest.mark.asyncio
-    async def test_register_success(self, test_client, auth_service):
+    async def test_register_success(self, test_client):
         """Test successful user registration."""
         user_data = {
             "email": "test@example.com",
@@ -92,7 +106,7 @@ class TestAuthEndpoints:
         assert "full_name" in data
 
     @pytest.mark.asyncio
-    async def test_register_duplicate_email(self, test_client, auth_service):
+    async def test_register_duplicate_email(self, test_client):
         """Test registration with duplicate email."""
         user_data = {
             "email": "duplicate@example.com",

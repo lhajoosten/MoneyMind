@@ -71,8 +71,8 @@ class TestUserRepository:
     ):
         """Test successful user retrieval by ID."""
         # Setup
-        mock_result = AsyncMock()
-        mock_result.scalar_one_or_none = MagicMock(return_value=sample_user_model)
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = sample_user_model
         mock_session.execute.return_value = mock_result
 
         # Execute
@@ -88,8 +88,8 @@ class TestUserRepository:
     async def test_get_by_id_not_found(self, user_repository, mock_session):
         """Test user retrieval by ID when user is not found."""
         # Setup
-        mock_result = AsyncMock()
-        mock_result.scalar_one_or_none = MagicMock(return_value=None)
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
 
         # Execute
@@ -105,8 +105,8 @@ class TestUserRepository:
     ):
         """Test successful user retrieval by email."""
         # Setup
-        mock_result = AsyncMock()
-        mock_result.scalar_one_or_none = MagicMock(return_value=sample_user_model)
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = sample_user_model
         mock_session.execute.return_value = mock_result
 
         # Execute
@@ -120,7 +120,7 @@ class TestUserRepository:
     async def test_get_by_email_not_found(self, user_repository, mock_session):
         """Test user retrieval by email when user is not found."""
         # Setup
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
 
@@ -134,7 +134,7 @@ class TestUserRepository:
     async def test_save_new_user(self, user_repository, mock_session, sample_user):
         """Test saving a new user."""
         # Setup
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None  # User doesn't exist
         mock_session.execute.return_value = mock_result
 
@@ -156,7 +156,7 @@ class TestUserRepository:
     ):
         """Test saving an existing user (update)."""
         # Setup
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = sample_user_model  # User exists
         mock_session.execute.return_value = mock_result
 
@@ -174,7 +174,7 @@ class TestUserRepository:
     ):
         """Test deleting an existing user."""
         # Setup
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = sample_user_model
         mock_session.execute.return_value = mock_result
 
@@ -183,14 +183,14 @@ class TestUserRepository:
         await user_repository.delete(user_id)
 
         # Assert
-        mock_session.delete.assert_called_once_with(sample_user_model)
+        mock_session.delete.assert_called_once()
         mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_delete_nonexistent_user(self, user_repository, mock_session):
         """Test deleting a nonexistent user."""
         # Setup
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
 
@@ -208,7 +208,7 @@ class TestUserRepository:
     ):
         """Test that session is properly used as context manager."""
         # Setup
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
 

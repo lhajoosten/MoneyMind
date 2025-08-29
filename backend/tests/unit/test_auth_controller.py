@@ -18,10 +18,16 @@ from app.domain.value_objects.user_id import UserId
 
 
 @pytest.fixture
-def test_app():
+def test_app(mock_auth_service):
     """Create test FastAPI application."""
+    from app.presentation.controllers.auth_controller import get_auth_service
+    
     app = FastAPI()
     app.include_router(router)
+    
+    # Override the dependency
+    app.dependency_overrides[get_auth_service] = lambda: mock_auth_service
+    
     return app
 
 
@@ -46,7 +52,8 @@ def mock_auth_service():
     )
     service.create_user.return_value = mock_user
     service.authenticate_user.return_value = mock_user
-    service.create_access_token.return_value = "mock.jwt.token"
+    # create_access_token is a synchronous method, so use regular MagicMock
+    service.create_access_token = MagicMock(return_value="mock.jwt.token")
     service.get_current_user.return_value = mock_user
 
     return service
@@ -64,9 +71,6 @@ class TestAuthController:
 
     def test_register_success(self, test_client, mock_auth_service):
         """Test successful user registration."""
-        # Mock the auth service in the app state
-        test_client.app.state.auth_service = mock_auth_service
-
         user_data = {
             "email": "test@example.com",
             "password": "TestPassword123!",
@@ -87,10 +91,7 @@ class TestAuthController:
     def test_register_service_error(self, test_client, mock_auth_service):
         """Test registration with service error."""
         # Mock service to raise exception
-        mock_auth_service.create_user.side_effect = Exception("User already exists")
-
-        # Mock the auth service in the app state
-        test_client.app.state.auth_service = mock_auth_service
+        mock_auth_service.create_user.side_effect = ValueError("User already exists")
 
         user_data = {
             "email": "existing@example.com",
@@ -106,9 +107,6 @@ class TestAuthController:
 
     def test_login_success(self, test_client, mock_auth_service):
         """Test successful user login."""
-        # Mock the auth service in the app state
-        test_client.app.state.auth_service = mock_auth_service
-
         login_data = {"username": "test@example.com", "password": "TestPassword123!"}
 
         response = test_client.post("/auth/login", data=login_data)
@@ -127,9 +125,6 @@ class TestAuthController:
             status_code=401, detail="Incorrect email or password"
         )
 
-        # Mock the auth service in the app state
-        test_client.app.state.auth_service = mock_auth_service
-
         login_data = {"username": "test@example.com", "password": "WrongPassword123!"}
 
         response = test_client.post("/auth/login", data=login_data)
@@ -139,9 +134,6 @@ class TestAuthController:
 
     def test_get_current_user_success(self, test_client, mock_auth_service):
         """Test getting current user with valid token."""
-        # Mock the auth service in the app state
-        test_client.app.state.auth_service = mock_auth_service
-
         headers = {"Authorization": "Bearer valid.jwt.token"}
 
         response = test_client.get("/auth/me", headers=headers)
@@ -160,9 +152,6 @@ class TestAuthController:
             status_code=401, detail="Invalid authentication credentials"
         )
 
-        # Mock the auth service in the app state
-        test_client.app.state.auth_service = mock_auth_service
-
         headers = {"Authorization": "Bearer invalid.jwt.token"}
 
         response = test_client.get("/auth/me", headers=headers)
@@ -172,9 +161,6 @@ class TestAuthController:
 
     def test_get_current_user_no_token(self, test_client, mock_auth_service):
         """Test getting current user without token."""
-        # Mock the auth service in the app state
-        test_client.app.state.auth_service = mock_auth_service
-
         response = test_client.get("/auth/me")
 
         assert response.status_code == 401
@@ -190,9 +176,6 @@ class TestAuthController:
 
     def test_register_invalid_email(self, test_client, mock_auth_service):
         """Test registration with invalid email format."""
-        # Mock the auth service in the app state
-        test_client.app.state.auth_service = mock_auth_service
-
         user_data = {
             "email": "invalid-email",
             "password": "TestPassword123!",
@@ -207,9 +190,6 @@ class TestAuthController:
 
     def test_register_weak_password(self, test_client, mock_auth_service):
         """Test registration with weak password."""
-        # Mock the auth service in the app state
-        test_client.app.state.auth_service = mock_auth_service
-
         user_data = {
             "email": "test@example.com",
             "password": "weak",
@@ -224,9 +204,6 @@ class TestAuthController:
 
     def test_register_empty_names(self, test_client, mock_auth_service):
         """Test registration with empty names."""
-        # Mock the auth service in the app state
-        test_client.app.state.auth_service = mock_auth_service
-
         user_data = {
             "email": "test@example.com",
             "password": "TestPassword123!",

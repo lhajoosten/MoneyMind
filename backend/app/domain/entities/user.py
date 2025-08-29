@@ -48,6 +48,16 @@ class User(Entity):
         if not self.hashed_password:
             return False
         return pwd_context.verify(password, self.hashed_password)
+    
+    def __eq__(self, other: object) -> bool:
+        """Check equality based on ID."""
+        if not isinstance(other, User):
+            return NotImplemented
+        return self.id == other.id
+
+    def __hash__(self) -> int:
+        """Hash based on ID."""
+        return hash(self.id)
 
     def deactivate(self) -> None:
         """Deactivate the user."""

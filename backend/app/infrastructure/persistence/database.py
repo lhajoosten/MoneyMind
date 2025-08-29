@@ -3,15 +3,19 @@
 from typing import AsyncGenerator
 import os
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 
 # Database URL should be set via environment variable
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL", "postgresql+asyncpg://user:password@localhost/moneymind"
-)
+# Use SQLite for testing, PostgreSQL for production
+if os.environ.get("TESTING") == "true":
+    DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+else:
+    DATABASE_URL = os.environ.get(
+        "DATABASE_URL", "postgresql+asyncpg://user:password@localhost/moneymind"
+    )
 
 # Create async engine
 engine = create_async_engine(
@@ -22,14 +26,14 @@ engine = create_async_engine(
 )
 
 # Create async session factory
-async_session_factory = sessionmaker(
+async_session_factory = async_sessionmaker(
     bind=engine,
-    class_=AsyncSession,
     expire_on_commit=False,
+    autoflush=False,
 )
 
 
-def get_session_factory() -> sessionmaker[AsyncSession]:
+def get_session_factory():
     """Get the async session factory."""
     return async_session_factory
 
